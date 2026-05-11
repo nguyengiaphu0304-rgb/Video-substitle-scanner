@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Knowledge Caption Extractor",
+  "version": "0.1.0",
+  "description": "Extract accessible timed captions from the current logged-in video tab.",
+  "permissions": ["activeTab", "clipboardWrite", "debugger", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Extract captions"
+  }
+}

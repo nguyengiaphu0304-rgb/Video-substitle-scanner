@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  institution String?
+  term        String?
+  examDate    DateTime?
+  lectureSets  LectureSet[]
+  studyArtifacts StudyArtifact[]
+  studySessions StudySession[]
+}
+
+model LectureSet {
+  id          String     @id @default(cuid())
+  courseId    String
+  title       String
+  status      String     @default("READY")
+  sourceFiles SourceFile[]
+  studyArtifacts StudyArtifact[]
+  course      Course     @relation(fields: [courseId], references: [id])
+}
+
+model SourceFile {
+  id              String      @id @default(cuid())
+  lectureSetId    String
+  originalName    String      @default("Pasted Lecture Text")
+  mimeType        String      @default("text/plain")
+  extractedText   String
+  extractionStatus String      @default("READY")
+  sourceBlocks    SourceBlock[]
+  lectureSet      LectureSet  @relation(fields: [lectureSetId], references: [id])
+}
+
+model SourceBlock {
+  id            String   @id @default(cuid())
+  sourceFileId  String
+  blockIndex    Int
+  text          String
+  charCount     Int
+  sourceFile    SourceFile @relation(fields: [sourceFileId], references: [id])
+}
+
+model StudyArtifact {
+  id            String       @id @default(cuid())
+  courseId      String
+  lectureSetId  String
+  artifactType  String      @default("QUIZ")
+  status        String      @default("READY")
+  inputScopeJson String
+  contentJson   String
+  artifactItems ArtifactItem[]
+  studySessions StudySession[]
+  course        Course      @relation(fields: [courseId], references: [id])
+  lectureSet    LectureSet  @relation(fields: [lectureSetId], references: [id])
+}
+
+model ArtifactItem {
+  id            String       @id @default(cuid())
+  artifactId    String
+  itemIndex     Int
+  itemType      String
+  prompt        String
+  answerKeyJson String
+  explanation   String
+  sourceAnchorJson String
+  contentJson   String
+  attempts      Attempt[]
+  artifact      StudyArtifact @relation(fields: [artifactId], references: [id])
+}
+
+model StudySession {
+  id            String       @id @default(cuid())
+  courseId      String
+  artifactId    String
+  mode          String
+  startedAt     DateTime?
+  completedAt   DateTime?
+  score         Int?
+  totalItems    Int?
+  attempts      Attempt[]
+  course        Course      @relation(fields: [courseId], references: [id])
+  artifact      StudyArtifact @relation(fields: [artifactId], references: [id])
+}
+
+model Attempt {
+  id              String       @id @default(cuid())
+  sessionId       String
+  artifactItemId  String
+  itemIndex       Int
+  itemType        String
+  responseJson    String
+  isCorrect       Boolean
+  timeSpentSeconds Int?
+  session         StudySession @relation(fields: [sessionId], references: [id])
+  artifactItem    ArtifactItem @relation(fields: [artifactItemId], references: [id])
+}

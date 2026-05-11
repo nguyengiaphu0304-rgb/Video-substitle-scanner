@@ -1,0 +1,69 @@
+# Video Subtitle Scanner
+
+Video Subtitle Scanner is a local subtitle capture workspace for collecting timed captions from web videos and turning them into SRT transcripts and timestamped notes.
+
+The project contains two parts:
+
+- A Next.js app with a subtitle capture and export interface.
+- A Chrome extension that runs inside the active video tab and tries to extract caption tracks, subtitle files, and subtitle playlist segments from logged-in pages.
+
+## Features
+
+- Extract captions from browser video text tracks when the site exposes them.
+- Scan network responses for VTT, SRT, TTML, and subtitle playlist resources.
+- Filter out timed metadata and discontinuity events that are not real subtitles.
+- Combine subtitle segments into a complete SRT when a subtitle playlist is available.
+- Generate timestamped notes and a full timed transcript from extracted SRT text.
+- Export captions as SRT from the web app or Chrome extension.
+
+## Project Structure
+
+```text
+chrome-extension/       Unpacked Chrome extension for logged-in video pages
+src/app/subtitle-capture Next.js subtitle capture interface
+src/modules/subtitle-capture Shared subtitle time/export helpers
+prisma/                 Local development schema
+```
+
+## Run The Web App
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000/subtitle-capture
+```
+
+## Install The Chrome Extension
+
+1. Open Chrome and go to `chrome://extensions`.
+2. Turn on Developer mode.
+3. Click Load unpacked.
+4. Select the `chrome-extension` folder from this project.
+5. Open the logged-in video page.
+6. Turn on CC in the video player.
+7. Open the extension and extract captions.
+
+For videos that load subtitles through playlists or short segments, use the extension's deep network scan mode, then refresh the scan after the video page has loaded caption resources.
+
+## Build And Check
+
+```bash
+npm run build
+npm run lint
+```
+
+## Notes
+
+This tool can only extract captions that the browser can access from the page, text tracks, or network responses. If a site never exposes a full subtitle file or playlist and only loads chunks during playback, the extension can only collect chunks that have been requested by the page.

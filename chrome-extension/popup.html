@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Caption Extractor</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <span>Knowledge Caption Extractor</span>
+        <h1>Get timed subtitles</h1>
+      </header>
+
+      <button id="extract" class="primary" type="button">Extract From This Tab</button>
+      <p id="status">Open the logged-in video tab, turn on CC, then click extract.</p>
+
+      <section class="deep-scan">
+        <h2>Deep Network Scan</h2>
+        <div class="actions three">
+          <button id="start-scan" type="button">Start Scan</button>
+          <button id="refresh-scan" type="button">Refresh</button>
+          <button id="stop-scan" type="button">Stop</button>
+        </div>
+        <p class="hint">Use this if normal extraction fails. Start scan, refresh/play the video with CC on, then refresh results.</p>
+      </section>
+
+      <textarea id="output" spellcheck="false" placeholder="Extracted SRT or caption URLs will appear here."></textarea>
+
+      <div class="actions">
+        <button id="copy" type="button">Copy SRT</button>
+        <button id="download" type="button">Download SRT</button>
+      </div>
+
+      <section>
+        <h2>Auto Notes</h2>
+        <textarea id="notes" spellcheck="false" placeholder="Notes will appear here after extraction."></textarea>
+        <div class="actions">
+          <button id="copy-notes" type="button">Copy Notes</button>
+          <button id="download-notes" type="button">Download Notes</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
