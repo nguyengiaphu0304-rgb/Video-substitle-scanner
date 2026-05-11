@@ -11,9 +11,9 @@ import type {
   Cue,
 } from "@/modules/subtitle-capture/types";
 
-const STORAGE_KEY = "lecture-record:subtitle-capture:v2";
-const KNOWLEDGE_URL = "https://www.knowledge.ca/watch/b524b638-9c91-44fe-9a73-821ef7e0118a";
-const DEFAULT_TITLE = "the city before the city";
+const STORAGE_KEY = "video-subtitle-scanner:subtitle-capture:v1";
+const DEFAULT_SOURCE_URL = "";
+const DEFAULT_TITLE = "Untitled subtitle project";
 const DEFAULT_DURATION_MS = 72 * 60 * 1000;
 const EXTRACT_SCRIPT = `(async () => {
   const video = document.querySelector("video");
@@ -158,7 +158,7 @@ function parsePersistedState(raw: string | null): PersistedState | null {
     const parsed = JSON.parse(raw) as Partial<PersistedState>;
     return {
       title: typeof parsed.title === "string" ? parsed.title : DEFAULT_TITLE,
-      sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : KNOWLEDGE_URL,
+      sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : DEFAULT_SOURCE_URL,
       cues: asCueArray(parsed.cues),
       draft:
         parsed.draft &&
@@ -277,7 +277,7 @@ export default function SubtitleCapturePage() {
   const videoObjectUrlRef = useRef<string | null>(null);
 
   const [sessionTitle, setSessionTitle] = useState(DEFAULT_TITLE);
-  const [sourceUrl, setSourceUrl] = useState(KNOWLEDGE_URL);
+  const [sourceUrl, setSourceUrl] = useState(DEFAULT_SOURCE_URL);
   const [mediaMode, setMediaMode] = useState<MediaMode>("source");
   const [clockSource, setClockSource] = useState<ClockSource>("manual");
   const [videoObjectUrl, setVideoObjectUrl] = useState("");
@@ -955,9 +955,11 @@ export default function SubtitleCapturePage() {
           <h1>{sessionTitle || DEFAULT_TITLE}</h1>
         </div>
         <div className="simple-header-actions">
-          <a className="button button-secondary" href={sourceUrl || KNOWLEDGE_URL} target="_blank" rel="noreferrer">
-            Open Video
-          </a>
+          {sourceUrl ? (
+            <a className="button button-secondary" href={sourceUrl} target="_blank" rel="noreferrer">
+              Open Video
+            </a>
+          ) : null}
           <button className="button button-danger" type="button" onClick={handleClearSession}>
             Clear
           </button>
@@ -987,7 +989,7 @@ export default function SubtitleCapturePage() {
             ) : (
               <div className="simple-empty-video">
                 <strong>Share your logged-in video tab</strong>
-                <span>Click Share Video Tab, then pick the Knowledge tab.</span>
+                <span>Click Share Video Tab, then pick the video tab.</span>
               </div>
             )}
             <canvas ref={screenCanvasRef} className="capture-canvas" />

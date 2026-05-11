@@ -1,15 +1,29 @@
 {
   "manifest_version": 3,
-  "name": "Knowledge Caption Extractor",
-  "version": "0.1.0",
-  "description": "Extract accessible timed captions from the current logged-in video tab.",
+  "name": "Video Subtitle Scanner",
+  "short_name": "Subtitle Scanner",
+  "version": "0.2.0",
+  "description": "Extract accessible timed captions from the active video tab and export SRT transcripts and notes.",
+  "minimum_chrome_version": "116",
   "permissions": ["activeTab", "clipboardWrite", "debugger", "scripting"],
-  "host_permissions": ["<all_urls>"],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Extract captions"
-  }
+    "default_title": "Video Subtitle Scanner",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "homepage_url": "https://github.com/nguyengiaphu0304-rgb/Video-substitle-scanner"
 }

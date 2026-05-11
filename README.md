@@ -15,11 +15,14 @@ The project contains two parts:
 - Combine subtitle segments into a complete SRT when a subtitle playlist is available.
 - Generate timestamped notes and a full timed transcript from extracted SRT text.
 - Export captions as SRT from the web app or Chrome extension.
+- Package the Chrome extension for public release.
 
 ## Project Structure
 
 ```text
 chrome-extension/       Unpacked Chrome extension for logged-in video pages
+docs/                   Chrome Web Store listing, privacy, and release notes
+scripts/                Local packaging scripts
 src/app/subtitle-capture Next.js subtitle capture interface
 src/modules/subtitle-capture Shared subtitle time/export helpers
 prisma/                 Local development schema
@@ -63,6 +66,20 @@ For videos that load subtitles through playlists or short segments, use the exte
 npm run build
 npm run lint
 ```
+
+## Package The Extension
+
+```bash
+npm run pack:extension
+```
+
+The Chrome Web Store upload ZIP is written to `dist/`.
+
+Publishing materials are in `docs/`:
+
+- `docs/privacy-policy.md`
+- `docs/chrome-web-store-listing.md`
+- `docs/publishing-checklist.md`
 
 ## Notes
 

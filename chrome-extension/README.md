@@ -1,24 +1,40 @@
-# Knowledge Caption Extractor
+# Video Subtitle Scanner Extension
 
-This local Chrome extension runs inside the currently open video tab and tries to extract timed captions directly from the page.
+This Chrome extension extracts accessible timed captions from the active video tab and exports them as SRT subtitles and Markdown notes.
 
-## Install
+## Local Install
 
 1. Open Chrome and go to `chrome://extensions`.
-2. Turn on **Developer mode**.
-3. Click **Load unpacked**.
+2. Turn on Developer mode.
+3. Click Load unpacked.
 4. Select this folder:
 
-   `C:\Users\trann\.codex\skills\lecture-record\chrome-extension`
+   `chrome-extension`
 
 ## Use
 
-1. Open the Knowledge video page and sign in.
-2. Turn on **CC** in the video player.
-3. Play the video for a few seconds.
-4. Click the extension icon.
-5. Click **Extract From This Tab**.
-6. If captions are exposed by the player, the extension copies SRT text to your clipboard and shows it in the popup.
-7. Click **Download SRT** or paste the result into the app's **Import captions** section.
+1. Open a video page that you can already access.
+2. Turn on captions or subtitles in the video player.
+3. Click the Video Subtitle Scanner extension icon.
+4. Click Extract From Active Tab.
+5. Copy or download the SRT and notes.
 
-If it cannot extract the caption text, it copies candidate caption URLs. Those URLs can be inspected to identify the real caption resource.
+## Advanced Scan
+
+Advanced Scan is optional. The extension declares Chrome debugger permission for this feature, but it attaches to the active tab only after the user clicks Start Scan. Use it only when regular extraction cannot find captions.
+
+1. Click Start Scan.
+2. Accept Chrome's debugger notice if shown.
+3. Refresh or play the video page with captions on.
+4. Click Refresh in the extension popup.
+5. Click Stop when finished.
+
+## Package For Chrome Web Store
+
+From the project root:
+
+```bash
+npm run pack:extension
+```
+
+The upload ZIP will be created in `dist/`.

@@ -3,38 +3,55 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Caption Extractor</title>
+    <title>Video Subtitle Scanner</title>
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <main>
-      <header>
-        <span>Knowledge Caption Extractor</span>
-        <h1>Get timed subtitles</h1>
+      <header class="hero">
+        <div class="mark" aria-hidden="true">VS</div>
+        <div>
+          <span>Video Subtitle Scanner</span>
+          <h1>Extract captions</h1>
+        </div>
       </header>
 
-      <button id="extract" class="primary" type="button">Extract From This Tab</button>
-      <p id="status">Open the logged-in video tab, turn on CC, then click extract.</p>
+      <section class="panel">
+        <button id="extract" class="primary" type="button">Extract From Active Tab</button>
+        <p id="status" role="status">Open a video tab, turn on captions, then extract.</p>
+      </section>
 
-      <section class="deep-scan">
-        <h2>Deep Network Scan</h2>
+      <section class="panel">
+        <div class="section-title">
+          <h2>Advanced Scan</h2>
+          <span>Optional</span>
+        </div>
         <div class="actions three">
           <button id="start-scan" type="button">Start Scan</button>
           <button id="refresh-scan" type="button">Refresh</button>
           <button id="stop-scan" type="button">Stop</button>
         </div>
-        <p class="hint">Use this if normal extraction fails. Start scan, refresh/play the video with CC on, then refresh results.</p>
+        <p class="hint">Uses Chrome debugger access only after you start it.</p>
       </section>
 
-      <textarea id="output" spellcheck="false" placeholder="Extracted SRT or caption URLs will appear here."></textarea>
+      <section class="panel">
+        <div class="section-title">
+          <h2>SRT Output</h2>
+          <span id="output-count">Ready</span>
+        </div>
+        <textarea id="output" spellcheck="false" placeholder="Extracted SRT or caption URLs will appear here."></textarea>
 
-      <div class="actions">
-        <button id="copy" type="button">Copy SRT</button>
-        <button id="download" type="button">Download SRT</button>
-      </div>
+        <div class="actions">
+          <button id="copy" type="button">Copy SRT</button>
+          <button id="download" type="button">Download SRT</button>
+        </div>
+      </section>
 
-      <section>
-        <h2>Auto Notes</h2>
+      <section class="panel">
+        <div class="section-title">
+          <h2>Auto Notes</h2>
+          <span>Markdown</span>
+        </div>
         <textarea id="notes" spellcheck="false" placeholder="Notes will appear here after extraction."></textarea>
         <div class="actions">
           <button id="copy-notes" type="button">Copy Notes</button>

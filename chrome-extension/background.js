@@ -166,7 +166,7 @@ async function startDeepScan(tabId) {
 
   return {
     attached: true,
-    message: "Deep scan attached. Turn on CC, refresh/play the video for 10 seconds, then click Refresh Scan."
+    message: "Advanced scan attached. Turn on captions, refresh or play the video, then click Refresh."
   };
 }
 

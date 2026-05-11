@@ -1,5 +1,6 @@
 const statusEl = document.getElementById("status");
 const outputEl = document.getElementById("output");
+const outputCountEl = document.getElementById("output-count");
 const notesEl = document.getElementById("notes");
 const extractButton = document.getElementById("extract");
 const copyButton = document.getElementById("copy");
@@ -14,6 +15,16 @@ function setStatus(message) {
   statusEl.textContent = message;
 }
 
+function setBusy(isBusy) {
+  for (const button of [extractButton, startScanButton, refreshScanButton, stopScanButton]) {
+    button.disabled = isBusy;
+  }
+}
+
+function setOutputLabel(text) {
+  outputCountEl.textContent = text;
+}
+
 function downloadText(filename, text) {
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url = URL.createObjectURL(blob);
@@ -22,6 +33,54 @@ function downloadText(filename, text) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+function originPattern(url) {
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return "";
+    }
+
+    return `${parsed.origin}/*`;
+  } catch {
+    return "";
+  }
+}
+
+function uniqueOriginPatterns(urls) {
+  return [...new Set(urls.map(originPattern).filter(Boolean))].slice(0, 20);
+}
+
+function permissionsApiAvailable() {
+  return Boolean(chrome.permissions?.contains && chrome.permissions?.request);
+}
+
+async function ensureOriginAccess(urls) {
+  const origins = uniqueOriginPatterns(urls);
+  if (origins.length === 0 || !permissionsApiAvailable()) {
+    return true;
+  }
+
+  const alreadyGranted = await chrome.permissions.contains({ origins });
+  if (alreadyGranted) {
+    return true;
+  }
+
+  return chrome.permissions.request({ origins });
+}
+
+async function ensureDebuggerAccess() {
+  if (!permissionsApiAvailable()) {
+    return true;
+  }
+
+  const alreadyGranted = await chrome.permissions.contains({ permissions: ["debugger"] });
+  if (alreadyGranted) {
+    return true;
+  }
+
+  return chrome.permissions.request({ permissions: ["debugger"] });
 }
 
 function frameProbe() {
@@ -373,6 +432,8 @@ function generateNotesFromSrt(srt, title = "Video Notes") {
 function setExtractedSrt(srt, title = "Video Notes") {
   outputEl.value = srt;
   notesEl.value = generateNotesFromSrt(srt, title);
+  const cueCount = parseSrtCues(srt).length;
+  setOutputLabel(cueCount === 1 ? "1 cue" : `${cueCount} cues`);
 }
 
 async function activeTabId() {
@@ -462,10 +523,12 @@ async function extractCaptions() {
   setStatus("Looking inside the active tab...");
   outputEl.value = "";
   notesEl.value = "";
+  setOutputLabel("Scanning");
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab?.id) {
     setStatus("No active tab found.");
+    setOutputLabel("Ready");
     return;
   }
 
@@ -487,6 +550,16 @@ async function extractCaptions() {
   const urls = [...new Set(frameResults.flatMap((result) => result.urls || []))];
   if (urls.length === 0) {
     setStatus("No text tracks or caption URLs found. Turn on CC, play a few seconds, then try again.");
+    setOutputLabel("No cues");
+    return;
+  }
+
+  const hasResourceAccess = await ensureOriginAccess(urls);
+  if (!hasResourceAccess) {
+    outputEl.value = urls.join("\n");
+    setOutputLabel(`${urls.length} candidates`);
+    setStatus("Caption resources found. Site access was not granted, so URLs were copied instead.");
+    await navigator.clipboard.writeText(outputEl.value);
     return;
   }
 
@@ -506,11 +579,18 @@ async function extractCaptions() {
   }
 
   outputEl.value = urls.join("\n");
+  setOutputLabel(`${urls.length} candidates`);
   await navigator.clipboard.writeText(outputEl.value);
   setStatus("No human captions found yet. Copied candidate URLs instead.");
 }
 
 async function startDeepScan() {
+  const hasDebuggerAccess = await ensureDebuggerAccess();
+  if (!hasDebuggerAccess) {
+    setStatus("Advanced scan needs Chrome debugger permission.");
+    return;
+  }
+
   const tabId = await activeTabId();
   if (!tabId) {
     setStatus("No active tab found.");
@@ -545,6 +625,8 @@ async function refreshDeepScan() {
 
   if (!result?.attached) {
     setStatus("Deep scan is not running.");
+    setOutputLabel("Ready");
+    return;
   }
 
   const captions = result?.captions || [];
@@ -562,6 +644,7 @@ async function refreshDeepScan() {
   outputEl.value = candidates
     .map((item) => `${item.mimeType || "unknown"} ${item.url}`)
     .join("\n");
+  setOutputLabel(`${candidates.length} candidates`);
   setStatus(`Deep scan has ${candidates.length} candidates, but no human captions yet.`);
 }
 
@@ -579,10 +662,16 @@ async function stopDeepScan() {
   setStatus("Deep scan stopped.");
 }
 
-extractButton.addEventListener("click", () => {
-  extractCaptions().catch((error) => {
+extractButton.addEventListener("click", async () => {
+  setBusy(true);
+  try {
+    await extractCaptions();
+  } catch (error) {
     setStatus("Extraction failed: " + (error?.message || String(error)));
-  });
+    setOutputLabel("Error");
+  } finally {
+    setBusy(false);
+  }
 });
 
 copyButton.addEventListener("click", async () => {
@@ -591,7 +680,7 @@ copyButton.addEventListener("click", async () => {
 });
 
 downloadButton.addEventListener("click", () => {
-  downloadText("knowledge-captions.srt", outputEl.value);
+  downloadText("video-subtitles.srt", outputEl.value);
 });
 
 copyNotesButton.addEventListener("click", async () => {
@@ -600,17 +689,38 @@ copyNotesButton.addEventListener("click", async () => {
 });
 
 downloadNotesButton.addEventListener("click", () => {
-  downloadText("knowledge-notes.md", notesEl.value);
+  downloadText("video-notes.md", notesEl.value);
 });
 
-startScanButton.addEventListener("click", () => {
-  startDeepScan().catch((error) => setStatus("Deep scan failed: " + (error?.message || String(error))));
+startScanButton.addEventListener("click", async () => {
+  setBusy(true);
+  try {
+    await startDeepScan();
+  } catch (error) {
+    setStatus("Deep scan failed: " + (error?.message || String(error)));
+  } finally {
+    setBusy(false);
+  }
 });
 
-refreshScanButton.addEventListener("click", () => {
-  refreshDeepScan().catch((error) => setStatus("Refresh failed: " + (error?.message || String(error))));
+refreshScanButton.addEventListener("click", async () => {
+  setBusy(true);
+  try {
+    await refreshDeepScan();
+  } catch (error) {
+    setStatus("Refresh failed: " + (error?.message || String(error)));
+  } finally {
+    setBusy(false);
+  }
 });
 
-stopScanButton.addEventListener("click", () => {
-  stopDeepScan().catch((error) => setStatus("Stop failed: " + (error?.message || String(error))));
+stopScanButton.addEventListener("click", async () => {
+  setBusy(true);
+  try {
+    await stopDeepScan();
+  } catch (error) {
+    setStatus("Stop failed: " + (error?.message || String(error)));
+  } finally {
+    setBusy(false);
+  }
 });
