@@ -71,9 +71,6 @@ async function launchExtension(testInfo, { grantOptionalPermissions = true } = {
   let [worker] = context.serviceWorkers();
   worker ??= await context.waitForEvent("serviceworker");
   const extensionId = worker.url().split("/")[2];
-  await context.grantPermissions(["clipboard-read", "clipboard-write"], {
-    origin: `chrome-extension://${extensionId}`,
-  });
   return { context, extensionId, worker };
 }
 
