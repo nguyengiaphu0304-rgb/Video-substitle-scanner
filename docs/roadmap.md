@@ -12,7 +12,7 @@
 
 - [ ] Chrome integration tests for permission denial, extraction and debugger detach
 - [ ] Accessible popup keyboard, focus and live-status audit
-- [ ] Cross-platform reproducible extension package with package-content validation
+- [x] Cross-platform reproducible extension package with package-content validation
 
 ## v1.0: verified release
 

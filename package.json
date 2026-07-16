@@ -11,8 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run && node --test tests/*.test.mjs",
     "verify:extension": "node scripts/validate-extension.mjs",
+    "verify:package": "node scripts/verify-extension-package.mjs",
     "audit": "npm audit --audit-level=high",
-    "pack:extension": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pack-extension.ps1"
+    "pack:extension": "node scripts/pack-extension.mjs"
   },
   "dependencies": {
     "@prisma/client": "5.22.0",

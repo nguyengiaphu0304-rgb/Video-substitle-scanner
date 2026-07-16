@@ -37,4 +37,10 @@ From the project root:
 npm run pack:extension
 ```
 
-The upload ZIP will be created in `dist/`.
+The cross-platform Node.js packager creates the upload ZIP, a SHA-256 sidecar and a machine-readable package manifest in `dist/`. Verify them before upload:
+
+```bash
+npm run verify:package
+```
+
+The archive is reproducible for identical source. Packaging rejects symlinks and unexpected files instead of silently including them.
