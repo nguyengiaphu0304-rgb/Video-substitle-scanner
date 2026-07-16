@@ -1,6 +1,6 @@
 {
   "name": "video-subtitle-scanner",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,7 @@
     "budget": "node scripts/check-performance-budget.mjs",
     "demo:generate": "node scripts/demo-evidence.mjs generate",
     "demo:verify": "node scripts/demo-evidence.mjs verify",
+    "privacy:verify": "node scripts/privacy-audit.mjs",
     "audit": "npm audit --audit-level=high",
     "pack:extension": "node scripts/pack-extension.mjs"
   },

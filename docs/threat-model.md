@@ -18,6 +18,8 @@
 ## Residual risks
 
 - A debugger session can observe caption-related response bodies from the active tab while attached.
+- The page origin or its CDN can observe normal request metadata when Advanced Scan fetches a discovered caption resource with the user's browser credentials.
+- Static privacy inspection can detect known source patterns and permission drift but cannot prove runtime behavior.
 - Site changes, DRM, inaccessible shadow roots and proprietary streaming formats can prevent extraction.
 - Candidate URL heuristics may miss captions or inspect a text-like non-caption response.
 - The companion Next.js app expands the dependency and server-side attack surface; every release must pass the dependency audit and deployment-specific review.

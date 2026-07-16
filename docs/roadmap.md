@@ -19,4 +19,5 @@
 - [x] Performance budget on large valid fixtures
 - [ ] Manual privacy and permission review
 - [x] Reproducible demo evidence and store/manual-install guide
+- [x] Auditable v1.0.0 release candidate and automated privacy report
 - [ ] Verified tag and non-prerelease GitHub Release
