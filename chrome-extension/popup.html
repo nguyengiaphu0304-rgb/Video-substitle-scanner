@@ -18,7 +18,7 @@
 
       <section class="panel">
         <button id="extract" class="primary" type="button">Extract From Active Tab</button>
-        <p id="status" role="status">Open a video tab, turn on captions, then extract.</p>
+        <p id="status" role="status" aria-live="polite" aria-atomic="true">Open a video tab, turn on captions, then extract.</p>
       </section>
 
       <section class="panel">
@@ -36,10 +36,10 @@
 
       <section class="panel">
         <div class="section-title">
-          <h2>SRT Output</h2>
+          <h2 id="output-heading">SRT Output</h2>
           <span id="output-count">Ready</span>
         </div>
-        <textarea id="output" spellcheck="false" placeholder="Extracted SRT or caption URLs will appear here."></textarea>
+        <textarea id="output" aria-labelledby="output-heading output-count" spellcheck="false" placeholder="Extracted SRT or caption URLs will appear here."></textarea>
 
         <div class="actions">
           <button id="copy" type="button">Copy SRT</button>
@@ -49,10 +49,10 @@
 
       <section class="panel">
         <div class="section-title">
-          <h2>Auto Notes</h2>
-          <span>Markdown</span>
+          <h2 id="notes-heading">Auto Notes</h2>
+          <span id="notes-format">Markdown</span>
         </div>
-        <textarea id="notes" spellcheck="false" placeholder="Notes will appear here after extraction."></textarea>
+        <textarea id="notes" aria-labelledby="notes-heading notes-format" spellcheck="false" placeholder="Notes will appear here after extraction."></textarea>
         <div class="actions">
           <button id="copy-notes" type="button">Copy Notes</button>
           <button id="download-notes" type="button">Download Notes</button>
