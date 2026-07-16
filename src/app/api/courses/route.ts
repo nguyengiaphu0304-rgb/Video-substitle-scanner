@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const courses = await db.course.findMany();
     return NextResponse.json(courses);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to retrieve courses' }, { status: 500 });
   }
 }
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       },
     });
     return NextResponse.json(course, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create course' }, { status: 500 });
   }
 }

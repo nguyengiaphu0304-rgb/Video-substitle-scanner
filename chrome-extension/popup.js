@@ -1,3 +1,10 @@
+import {
+  captionTextToSrt,
+  combineSrtTexts,
+  isHumanCaptionText,
+  parseTimeToSeconds
+} from "./caption-core.js";
+
 const statusEl = document.getElementById("status");
 const outputEl = document.getElementById("output");
 const outputCountEl = document.getElementById("output-count");
@@ -123,8 +130,8 @@ function frameProbe() {
       return false;
     }
 
-    const letters = cleaned.match(/[A-Za-z]/g) || [];
-    if (letters.length < 3) {
+    const meaningfulCharacters = cleaned.match(/[\p{L}\p{N}]/gu) || [];
+    if (meaningfulCharacters.length < 1) {
       return false;
     }
 
@@ -217,60 +224,11 @@ function frameProbe() {
   };
 }
 
-function parseTimeToSeconds(value) {
-  const text = String(value || "").trim().replace(",", ".");
-  const parts = text.split(":");
-  if (parts.length < 2 || parts.length > 3) {
-    return null;
-  }
-
-  const secondsText = parts.pop();
-  const minutesText = parts.pop();
-  const hoursText = parts.pop() || "0";
-  const seconds = Number(secondsText);
-  const minutes = Number(minutesText);
-  const hours = Number(hoursText);
-
-  if (![hours, minutes, seconds].every(Number.isFinite)) {
-    return null;
-  }
-
-  return hours * 3600 + minutes * 60 + seconds;
-}
-
-function srtTime(seconds) {
-  const ms = Math.max(0, Math.round(Number(seconds || 0) * 1000));
-  const h = Math.floor(ms / 3600000);
-  const m = Math.floor((ms / 60000) % 60);
-  const s = Math.floor((ms / 1000) % 60);
-  const x = ms % 1000;
-  return [h, m, s].map((value) => String(value).padStart(2, "0")).join(":") + "," + String(x).padStart(3, "0");
-}
-
 function stripTags(text) {
   return String(text || "")
     .replace(/<[^>]+>/g, "")
     .replace(/\u00a0/g, " ")
     .trim();
-}
-
-function isHumanCaptionText(text) {
-  const cleaned = stripTags(text).replace(/\s+/g, " ");
-  if (!cleaned || cleaned.length < 2) {
-    return false;
-  }
-
-  if (/"metadataType"|discontinuity|DISCONTINUITY|"\s*PTS\s*"|^\s*\{[\s\S]*\}\s*$/i.test(cleaned)) {
-    return false;
-  }
-
-  const letters = cleaned.match(/[A-Za-z]/g) || [];
-  if (letters.length < 3) {
-    return false;
-  }
-
-  const jsonPunctuation = cleaned.match(/[{}":,]/g) || [];
-  return jsonPunctuation.length / Math.max(cleaned.length, 1) < 0.18;
 }
 
 function parseSrtCues(srt) {
@@ -439,84 +397,6 @@ function setExtractedSrt(srt, title = "Video Notes") {
 async function activeTabId() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   return tab?.id || null;
-}
-
-function captionTextToSrt(text) {
-  const trimmed = String(text || "").replace(/\r/g, "").trim();
-  if (!trimmed) {
-    return "";
-  }
-
-  if (/<tt[\s>]/i.test(trimmed)) {
-    const doc = new DOMParser().parseFromString(trimmed, "text/xml");
-    const paragraphs = Array.from(doc.querySelectorAll("p[begin][end]"));
-    return paragraphs
-      .map((node, index) => {
-        const start = parseTimeToSeconds(node.getAttribute("begin"));
-        const end = parseTimeToSeconds(node.getAttribute("end"));
-        const textValue = stripTags(node.textContent || "");
-        if (start === null || end === null || !isHumanCaptionText(textValue)) {
-          return "";
-        }
-
-        return [String(index + 1), `${srtTime(start)} --> ${srtTime(end)}`, textValue].join("\n");
-      })
-      .filter(Boolean)
-      .join("\n\n");
-  }
-
-  const blocks = trimmed
-    .replace(/^WEBVTT[^\n]*(\n|$)/i, "")
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter(Boolean);
-
-  let index = 0;
-  return blocks
-    .map((block) => {
-      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
-      const timingIndex = lines.findIndex((line) => line.includes("-->"));
-      if (timingIndex === -1) {
-        return "";
-      }
-
-      const match = /^(.+?)\s+-->\s+(.+?)(?:\s|$)/.exec(lines[timingIndex]);
-      if (!match) {
-        return "";
-      }
-
-      const start = parseTimeToSeconds(match[1]);
-      const end = parseTimeToSeconds(match[2]);
-      const cueText = stripTags(lines.slice(timingIndex + 1).join("\n"));
-      if (start === null || end === null || !isHumanCaptionText(cueText)) {
-        return "";
-      }
-
-      index += 1;
-      return [String(index), `${srtTime(start)} --> ${srtTime(end)}`, cueText].join("\n");
-    })
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-function renumberSrt(srt) {
-  const blocks = String(srt || "")
-    .replace(/\r/g, "")
-    .split(/\n{2,}/)
-    .map((block) => block.trim())
-    .filter((block) => block.includes("-->"));
-
-  return blocks
-    .map((block, index) => {
-      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
-      const timingIndex = lines.findIndex((line) => line.includes("-->"));
-      return [String(index + 1), lines[timingIndex], ...lines.slice(timingIndex + 1)].join("\n");
-    })
-    .join("\n\n");
-}
-
-function combineSrtTexts(texts) {
-  return renumberSrt(texts.filter(Boolean).join("\n\n"));
 }
 
 async function extractCaptions() {

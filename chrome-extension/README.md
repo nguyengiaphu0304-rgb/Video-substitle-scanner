@@ -21,7 +21,7 @@ This Chrome extension extracts accessible timed captions from the active video t
 
 ## Advanced Scan
 
-Advanced Scan is optional. The extension declares Chrome debugger permission for this feature, but it attaches to the active tab only after the user clicks Start Scan. Use it only when regular extraction cannot find captions.
+Advanced Scan is optional. Chrome asks for debugger permission only after the user clicks Start Scan, and the extension attaches only to the active tab. Use it only when regular extraction cannot find captions.
 
 1. Click Start Scan.
 2. Accept Chrome's debugger notice if shown.

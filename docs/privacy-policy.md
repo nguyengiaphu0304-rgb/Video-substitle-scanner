@@ -17,12 +17,14 @@ The extension uses these Chrome permissions:
 - `activeTab`: lets the extension inspect the currently selected tab after the user clicks the extension.
 - `scripting`: lets the extension read accessible video caption tracks from the active tab.
 - `clipboardWrite`: lets the extension copy extracted subtitles or notes when the user asks it to.
-- `debugger`: used only when the user starts Advanced Scan, so the extension can inspect caption-related network responses for the active tab.
+- Optional `debugger`: requested only after the user starts Advanced Scan, so the extension can inspect caption-related network responses for the active tab. It is not granted at installation.
 - Optional site access: requested only when needed to fetch candidate caption resources discovered from the active tab.
 
 ## Local Storage
 
 The extension does not store extracted captions on a remote server. Browser clipboard and downloaded files are controlled by the user and remain on the user's device.
+
+The companion web app has separate local development APIs. The Chrome extension does not send data to those APIs.
 
 ## Remote Code
 

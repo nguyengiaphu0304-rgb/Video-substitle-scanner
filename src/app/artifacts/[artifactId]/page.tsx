@@ -17,7 +17,7 @@ const ArtifactPage = () => {
         try {
           const data = await fetchArtifact(artifactId);
           setArtifact(data);
-        } catch (err) {
+        } catch {
           setError('Failed to load artifact');
         } finally {
           setLoading(false);

@@ -1,5 +1,3 @@
-import { chunk } from "lodash";
-
 export function chunkLectureText(text: string, maxChars: number = 1000): string[] {
   const paragraphs = text.split(/\n+/);
   const chunks: string[] = [];
