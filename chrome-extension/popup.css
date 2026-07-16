@@ -110,6 +110,12 @@ button:hover {
   background: #eef2f6;
 }
 
+button:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #f59e0b;
+  outline-offset: 2px;
+}
+
 button:disabled {
   cursor: wait;
   opacity: 0.62;

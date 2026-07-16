@@ -10,8 +10,8 @@
 
 ## v0.4: browser verification
 
-- [ ] Chrome integration tests for permission denial, extraction and debugger detach
-- [ ] Accessible popup keyboard, focus and live-status audit
+- [x] Chromium integration tests for permission denial, extraction and debugger detach
+- [x] Automated popup keyboard, focus, live-status and axe audit
 - [x] Cross-platform reproducible extension package with package-content validation
 
 ## v1.0: verified release

@@ -7,9 +7,26 @@ import {
   combineSrtTexts,
   hasHumanCaptions,
   isHumanCaptionText,
+  originPattern,
   parseCaptionCues,
   parseTimeToSeconds,
+  uniqueOriginPatterns,
 } from "../chrome-extension/caption-core.js";
+
+test("normalizes Chrome origin permissions without ports", () => {
+  assert.equal(originPattern("https://example.test:8443/video"), "https://example.test/*");
+  assert.equal(originPattern("http://127.0.0.1:4312/fixture"), "http://127.0.0.1/*");
+  assert.equal(originPattern("chrome://settings"), "");
+  assert.equal(originPattern("not a URL"), "");
+  assert.deepEqual(
+    uniqueOriginPatterns([
+      "https://example.test:443/one",
+      "https://example.test:8443/two",
+      "http://example.test/three",
+    ]),
+    ["https://example.test/*", "http://example.test/*"],
+  );
+});
 
 test("preserves captions across writing systems", () => {
   const input = `WEBVTT

@@ -147,8 +147,25 @@ async function stopDeepScan(tabId) {
   return { attached: false };
 }
 
-function getDeepScan(tabId) {
+function debuggerTargets() {
+  return new Promise((resolve, reject) => {
+    chrome.debugger.getTargets((targets) => {
+      const error = chrome.runtime.lastError;
+      if (error) {
+        reject(new Error(error.message));
+        return;
+      }
+      resolve(targets || []);
+    });
+  });
+}
+
+async function getDeepScan(tabId) {
   const state = scanState(tabId);
+  if (state.attached) {
+    const targets = await debuggerTargets();
+    state.attached = targets.some((target) => target.tabId === tabId && target.attached);
+  }
   return {
     attached: state.attached,
     candidates: uniqueByUrl(state.candidates),
@@ -383,8 +400,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message?.type === "GET_DEEP_SCAN") {
-    sendResponse({ ok: true, result: getDeepScan(message.tabId) });
-    return false;
+    getDeepScan(message.tabId)
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((error) => sendResponse({ ok: false, error: String(error) }));
+
+    return true;
   }
 
   if (message?.type === "STOP_DEEP_SCAN") {
