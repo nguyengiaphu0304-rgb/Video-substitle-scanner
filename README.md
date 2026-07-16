@@ -72,6 +72,8 @@ npm test
 npm run verify:extension
 npm run build
 npm run audit
+npm run pack:extension
+npm run verify:package
 ```
 
 `npm run audit` is an enforced release gate. A release must not be tagged while high-severity advisories remain unresolved.
@@ -82,7 +84,7 @@ npm run audit
 npm run pack:extension
 ```
 
-The Chrome Web Store upload ZIP is written to `dist/`.
+The deterministic Chrome Web Store upload ZIP, SHA-256 sidecar and package manifest are written to `dist/`. The dependency-free Node.js packager uses a strict allowlist and rejects symlinks or unexpected files. Identical source produces identical archive bytes; generated artifacts are not committed.
 
 Publishing materials are in `docs/`:
 
@@ -94,4 +96,4 @@ Publishing materials are in `docs/`:
 
 This tool can only extract captions that the browser can access from the page, text tracks, or network responses. If a site never exposes a full subtitle file or playlist and only loads chunks during playback, the extension can only collect chunks that have been requested by the page.
 
-The tool does not bypass DRM, transcribe audio or upload user media. TTML support covers timed paragraph elements and does not claim conformance with every TTML profile. See [architecture](docs/architecture.md), [threat model](docs/threat-model.md), [ADR 001](docs/adr/001-shared-parser-and-optional-debugger.md) and the [roadmap](docs/roadmap.md).
+The tool does not bypass DRM, transcribe audio or upload user media. TTML support covers timed paragraph elements and does not claim conformance with every TTML profile. See [architecture](docs/architecture.md), [threat model](docs/threat-model.md), [ADR 001](docs/adr/001-shared-parser-and-optional-debugger.md), [ADR 002](docs/adr/002-deterministic-extension-packaging.md) and the [roadmap](docs/roadmap.md).
