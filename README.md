@@ -16,6 +16,8 @@ The project contains two parts:
 - Generate timestamped notes and a full timed transcript from extracted SRT text.
 - Export captions as SRT from the web app or Chrome extension.
 - Package the Chrome extension for public release.
+- Preserve multilingual subtitle text through a shared, deterministic SRT/WebVTT/TTML parser.
+- Request site and debugger access only at runtime when the relevant action needs it.
 
 ## Project Structure
 
@@ -25,6 +27,7 @@ docs/                   Chrome Web Store listing, privacy, and release notes
 scripts/                Local packaging scripts
 src/app/subtitle-capture Next.js subtitle capture interface
 src/modules/subtitle-capture Shared subtitle time/export helpers
+tests/                  Offline parser and manifest security tests
 prisma/                 Local development schema
 ```
 
@@ -33,7 +36,7 @@ prisma/                 Local development schema
 Install dependencies:
 
 ```bash
-npm install
+npm ci
 ```
 
 Start the development server:
@@ -63,9 +66,15 @@ For videos that load subtitles through playlists or short segments, use the exte
 ## Build And Check
 
 ```bash
-npm run build
 npm run lint
+npm run typecheck
+npm test
+npm run verify:extension
+npm run build
+npm run audit
 ```
+
+`npm run audit` is an enforced release gate. A release must not be tagged while high-severity advisories remain unresolved.
 
 ## Package The Extension
 
@@ -84,3 +93,5 @@ Publishing materials are in `docs/`:
 ## Notes
 
 This tool can only extract captions that the browser can access from the page, text tracks, or network responses. If a site never exposes a full subtitle file or playlist and only loads chunks during playback, the extension can only collect chunks that have been requested by the page.
+
+The tool does not bypass DRM, transcribe audio or upload user media. TTML support covers timed paragraph elements and does not claim conformance with every TTML profile. See [architecture](docs/architecture.md), [threat model](docs/threat-model.md), [ADR 001](docs/adr/001-shared-parser-and-optional-debugger.md) and the [roadmap](docs/roadmap.md).

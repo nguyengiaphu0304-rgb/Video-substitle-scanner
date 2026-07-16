@@ -43,7 +43,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     return NextResponse.json({ lectureSet, sourceFile, sourceBlocksCreated: blocks.length }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to ingest lecture text' }, { status: 500 });
   }
 }

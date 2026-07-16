@@ -1,6 +1,5 @@
 "use client";
 
-import type { ChangeEvent, MouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { buildExport, sortCues } from "@/modules/subtitle-capture/export";
@@ -14,7 +13,6 @@ import type {
 const STORAGE_KEY = "video-subtitle-scanner:subtitle-capture:v1";
 const DEFAULT_SOURCE_URL = "";
 const DEFAULT_TITLE = "Untitled subtitle project";
-const DEFAULT_DURATION_MS = 72 * 60 * 1000;
 const EXTRACT_SCRIPT = `(async () => {
   const video = document.querySelector("video");
   const srtTime = (seconds) => {
@@ -85,7 +83,6 @@ type PersistedState = {
   clockSource: ClockSource;
   mediaMode: MediaMode;
   manualClockRate: number;
-  autoCaptureIntervalSeconds: number;
 };
 
 function defaultDraft(timecode = "00:00:00.000"): DraftCue {
@@ -181,11 +178,6 @@ function parsePersistedState(raw: string | null): PersistedState | null {
         typeof parsed.manualClockRate === "number" && Number.isFinite(parsed.manualClockRate)
           ? Math.min(4, Math.max(0.25, parsed.manualClockRate))
           : 1,
-      autoCaptureIntervalSeconds:
-        typeof parsed.autoCaptureIntervalSeconds === "number" &&
-        Number.isFinite(parsed.autoCaptureIntervalSeconds)
-          ? Math.min(10, Math.max(0.5, parsed.autoCaptureIntervalSeconds))
-          : 1,
     };
   } catch {
     return null;
@@ -212,13 +204,6 @@ function getCueIssue(cue: Cue, index: number, cues: Cue[]): string {
   }
 
   return "";
-}
-
-function formatRuntime(value: number): string {
-  const totalSeconds = Math.round(value / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
 function parseCaptionImport(input: string): Cue[] {
@@ -271,24 +256,16 @@ export default function SubtitleCapturePage() {
   const screenVideoRef = useRef<HTMLVideoElement | null>(null);
   const screenCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
-  const autoCaptureIntervalRef = useRef<number | null>(null);
   const autoSnapshotBusyRef = useRef(false);
   const subtitleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const videoObjectUrlRef = useRef<string | null>(null);
 
   const [sessionTitle, setSessionTitle] = useState(DEFAULT_TITLE);
   const [sourceUrl, setSourceUrl] = useState(DEFAULT_SOURCE_URL);
   const [mediaMode, setMediaMode] = useState<MediaMode>("source");
   const [clockSource, setClockSource] = useState<ClockSource>("manual");
-  const [videoObjectUrl, setVideoObjectUrl] = useState("");
-  const [videoFileName, setVideoFileName] = useState("");
+  const videoObjectUrl = "";
   const [videoCurrentMs, setVideoCurrentMs] = useState(0);
-  const [videoDurationMs, setVideoDurationMs] = useState<number | null>(null);
   const [screenShareActive, setScreenShareActive] = useState(false);
-  const [lastSnapshotPath, setLastSnapshotPath] = useState("");
-  const [snapshotCount, setSnapshotCount] = useState(0);
-  const [autoCaptureActive, setAutoCaptureActive] = useState(false);
-  const [autoCaptureIntervalSeconds, setAutoCaptureIntervalSeconds] = useState(1);
   const [cues, setCues] = useState<Cue[]>([]);
   const [draft, setDraft] = useState<DraftCue>(defaultDraft());
   const [baseElapsedMs, setBaseElapsedMs] = useState(0);
@@ -309,12 +286,7 @@ export default function SubtitleCapturePage() {
       : baseElapsedMs + Math.max(0, nowMs - startedAtMs) * manualClockRate;
   const usingVideoClock = clockSource === "video" && Boolean(videoObjectUrl);
   const currentMs = usingVideoClock ? videoCurrentMs : manualElapsedMs;
-  const knownDurationMs = videoDurationMs ?? DEFAULT_DURATION_MS;
   const sortedCueList = useMemo(() => sortCues(cues), [cues]);
-  const activeCue = useMemo(
-    () => sortedCueList.find((cue) => currentMs >= cue.startMs && currentMs <= cue.endMs) ?? null,
-    [currentMs, sortedCueList],
-  );
   const filteredCues = useMemo(() => {
     const needle = filterText.trim().toLowerCase();
     if (!needle) {
@@ -347,7 +319,6 @@ export default function SubtitleCapturePage() {
     srt: "srt",
     vtt: "vtt",
   };
-  const progressPercent = knownDurationMs > 0 ? Math.min(100, (currentMs / knownDurationMs) * 100) : 0;
   const latestCue = sortedCueList[sortedCueList.length - 1];
 
   useEffect(() => {
@@ -363,7 +334,6 @@ export default function SubtitleCapturePage() {
       setClockSource(restored.clockSource);
       setMediaMode(restored.mediaMode);
       setManualClockRate(restored.manualClockRate);
-      setAutoCaptureIntervalSeconds(restored.autoCaptureIntervalSeconds);
       setTimerSyncInput(formatEditableTimecode(restored.baseElapsedMs));
     }
 
@@ -386,7 +356,6 @@ export default function SubtitleCapturePage() {
       clockSource,
       mediaMode,
       manualClockRate,
-      autoCaptureIntervalSeconds,
     };
 
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -397,7 +366,6 @@ export default function SubtitleCapturePage() {
     exportKind,
     filterText,
     loaded,
-    autoCaptureIntervalSeconds,
     manualClockRate,
     mediaMode,
     sessionTitle,
@@ -431,14 +399,7 @@ export default function SubtitleCapturePage() {
 
   useEffect(() => {
     return () => {
-      if (videoObjectUrlRef.current) {
-        window.URL.revokeObjectURL(videoObjectUrlRef.current);
-      }
-
       screenStreamRef.current?.getTracks().forEach((track) => track.stop());
-      if (autoCaptureIntervalRef.current !== null) {
-        window.clearInterval(autoCaptureIntervalRef.current);
-      }
     };
   }, []);
 
@@ -491,26 +452,6 @@ export default function SubtitleCapturePage() {
     }));
   };
 
-  const handleVideoFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
-    if (videoObjectUrlRef.current) {
-      window.URL.revokeObjectURL(videoObjectUrlRef.current);
-    }
-
-    const objectUrl = window.URL.createObjectURL(file);
-    videoObjectUrlRef.current = objectUrl;
-    setVideoObjectUrl(objectUrl);
-    setVideoFileName(file.name);
-    setMediaMode("local");
-    setClockSource("video");
-    setStartedAtMs(null);
-    setStatusText("Local video ready.");
-  };
-
   const handleStartScreenShare = async () => {
     if (!navigator.mediaDevices?.getDisplayMedia) {
       setStatusText("Screen capture is not available in this browser.");
@@ -530,13 +471,7 @@ export default function SubtitleCapturePage() {
 
       const [track] = stream.getVideoTracks();
       track?.addEventListener("ended", () => {
-        if (autoCaptureIntervalRef.current !== null) {
-          window.clearInterval(autoCaptureIntervalRef.current);
-          autoCaptureIntervalRef.current = null;
-        }
-
         setScreenShareActive(false);
-        setAutoCaptureActive(false);
         screenStreamRef.current = null;
       });
 
@@ -552,22 +487,16 @@ export default function SubtitleCapturePage() {
   };
 
   const handleStopScreenShare = () => {
-    if (autoCaptureIntervalRef.current !== null) {
-      window.clearInterval(autoCaptureIntervalRef.current);
-      autoCaptureIntervalRef.current = null;
-    }
-
     screenStreamRef.current?.getTracks().forEach((track) => track.stop());
     screenStreamRef.current = null;
     if (screenVideoRef.current) {
       screenVideoRef.current.srcObject = null;
     }
     setScreenShareActive(false);
-    setAutoCaptureActive(false);
     setStatusText("Shared tab stopped.");
   };
 
-  const saveSnapshot = async (captureMode: "single" | "auto" = "single") => {
+  const saveSnapshot = async () => {
     if (autoSnapshotBusyRef.current) {
       return;
     }
@@ -603,7 +532,7 @@ export default function SubtitleCapturePage() {
           sourceUrl,
           timecode: formatEditableTimecode(currentMs),
           title: sessionTitle,
-          captureMode,
+          captureMode: "single",
         }),
       });
 
@@ -613,9 +542,7 @@ export default function SubtitleCapturePage() {
       }
 
       const result = (await response.json()) as { imagePath?: string };
-      setLastSnapshotPath(result.imagePath ?? "");
-      setSnapshotCount((count) => count + 1);
-      setStatusText(captureMode === "auto" ? "Auto snapshot saved." : "Snapshot saved for Codex.");
+      setStatusText(result.imagePath ? "Snapshot saved for Codex." : "Snapshot saved.");
     } catch {
       autoSnapshotBusyRef.current = false;
       setStatusText("Snapshot could not be saved.");
@@ -626,36 +553,7 @@ export default function SubtitleCapturePage() {
   };
 
   const handleSaveSnapshot = () => {
-    void saveSnapshot("single");
-  };
-
-  const handleStartAutoCapture = () => {
-    if (!screenShareActive) {
-      setStatusText("Share the logged-in tab first.");
-      return;
-    }
-
-    if (autoCaptureIntervalRef.current !== null) {
-      window.clearInterval(autoCaptureIntervalRef.current);
-    }
-
-    void saveSnapshot("auto");
-    const intervalMs = Math.max(500, autoCaptureIntervalSeconds * 1000);
-    autoCaptureIntervalRef.current = window.setInterval(() => {
-      void saveSnapshot("auto");
-    }, intervalMs);
-    setAutoCaptureActive(true);
-    setStatusText(`Auto capture every ${autoCaptureIntervalSeconds}s.`);
-  };
-
-  const handleStopAutoCapture = () => {
-    if (autoCaptureIntervalRef.current !== null) {
-      window.clearInterval(autoCaptureIntervalRef.current);
-      autoCaptureIntervalRef.current = null;
-    }
-
-    setAutoCaptureActive(false);
-    setStatusText("Auto capture stopped.");
+    void saveSnapshot();
   };
 
   const handleStartTimer = () => {
@@ -689,20 +587,6 @@ export default function SubtitleCapturePage() {
     setStatusText("Manual clock paused.");
   };
 
-  const handleResetTimer = () => {
-    if (usingVideoClock && videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.pause();
-      setVideoCurrentMs(0);
-    }
-
-    setBaseElapsedMs(0);
-    setStartedAtMs(null);
-    setTimerSyncInput("00:00:00.000");
-    resetDraft("00:00:00.000");
-    setStatusText("Clock reset.");
-  };
-
   const handleApplySync = () => {
     const parsed = parseTimecode(timerSyncInput);
     if (parsed === null) {
@@ -712,30 +596,6 @@ export default function SubtitleCapturePage() {
 
     seekToMs(parsed);
     setStatusText(`Clock synced to ${formatEditableTimecode(parsed)}.`);
-  };
-
-  const handleNudgeDraft = (amountMs: number) => {
-    const startMs = parseTimecode(draft.start);
-    const endMs = parseTimecode(draft.end);
-    if (startMs === null || endMs === null) {
-      setStatusText("Cue times need valid timecodes first.");
-      return;
-    }
-
-    setDraft((current) => ({
-      ...current,
-      start: formatEditableTimecode(startMs + amountMs),
-      end: formatEditableTimecode(endMs + amountMs),
-    }));
-  };
-
-  const handleSetDraftDuration = (durationMs: number) => {
-    const startMs = parseTimecode(draft.start) ?? currentMs;
-    setDraft((current) => ({
-      ...current,
-      start: formatEditableTimecode(startMs),
-      end: formatEditableTimecode(startMs + durationMs),
-    }));
   };
 
   const saveCueFromDraft = (candidateDraft: DraftCue) => {
@@ -778,10 +638,6 @@ export default function SubtitleCapturePage() {
     seekToMs(endMs);
     setStatusText(editingCueId ? "Cue updated." : "Cue saved.");
     return true;
-  };
-
-  const handleSaveCue = () => {
-    saveCueFromDraft(draft);
   };
 
   const handleSaveCueAtCurrentTime = () => {
@@ -887,12 +743,6 @@ export default function SubtitleCapturePage() {
     resetDraft("00:00:00.000");
     seekToMs(0);
     setStatusText("Session cleared.");
-  };
-
-  const handleRulerClick = (event: MouseEvent<HTMLDivElement>) => {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    const ratio = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width));
-    seekToMs(ratio * knownDurationMs);
   };
 
   useEffect(() => {

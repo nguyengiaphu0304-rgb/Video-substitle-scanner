@@ -1,4 +1,4 @@
-name: Verify
+name: verify
 
 on:
   pull_request:
@@ -9,21 +9,19 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
+      - run: npm run verify:extension
       - run: npm run build
-      - run: npm audit --audit-level=high
-      - name: Validate minimum extension permissions
-        run: |
-          node -e 'const m=require("./chrome-extension/manifest.json"); if(m.permissions.includes("debugger") || !m.optional_permissions.includes("debugger")) process.exit(1)'
+      - run: npm run audit

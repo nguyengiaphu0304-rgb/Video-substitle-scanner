@@ -17,7 +17,7 @@ const CoursePage = () => {
         try {
           const courseData = await fetchCourseDetails(courseId);
           setCourse(courseData);
-        } catch (err) {
+        } catch {
           setError('Failed to load course details');
         } finally {
           setLoading(false);

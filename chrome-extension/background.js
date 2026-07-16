@@ -1,8 +1,13 @@
+import {
+  MAX_CANDIDATE_URLS,
+  MAX_CAPTION_BYTES,
+  hasHumanCaptions
+} from "./caption-core.js";
+
 const CAPTION_HINT = /-->|WEBVTT|<tt[\s>]|<p\s/i;
 const URL_HINT = /vtt|srt|ttml|caption|subtitle|texttrack|webvtt|m3u8/i;
 const MIME_HINT = /vtt|srt|ttml|mpegurl|x-mpegurl|text|json|xml/i;
 const BAD_URL_HINT = /metadata|timedmetadata|discontinuity|id3|emsg/i;
-const BAD_TEXT_HINT = /"metadataType"|discontinuity|DISCONTINUITY|"\s*PTS\s*"|^\s*\{[\s\S]*\}\s*$/i;
 const scanByTab = new Map();
 
 function absoluteUrl(baseUrl, value) {
@@ -15,50 +20,6 @@ function absoluteUrl(baseUrl, value) {
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
-}
-
-function stripTags(text) {
-  return String(text || "")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\u00a0/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function isHumanCaptionText(text) {
-  const cleaned = stripTags(text);
-  if (!cleaned || cleaned.length < 2 || BAD_TEXT_HINT.test(cleaned)) {
-    return false;
-  }
-
-  const letters = cleaned.match(/\p{L}/gu) || [];
-  if (letters.length < 3) {
-    return false;
-  }
-
-  const jsonPunctuation = cleaned.match(/[{}":,]/g) || [];
-  return jsonPunctuation.length / Math.max(cleaned.length, 1) < 0.18;
-}
-
-function hasHumanCaptions(text) {
-  const cleaned = String(text || "").replace(/\r/g, "").trim();
-  if (!cleaned || BAD_TEXT_HINT.test(cleaned)) {
-    return false;
-  }
-
-  if (/<tt[\s>]/i.test(cleaned)) {
-    const paragraphTexts = [...cleaned.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)].map((match) => match[1]);
-    return paragraphTexts.some(isHumanCaptionText);
-  }
-
-  return cleaned
-    .replace(/^WEBVTT[^\n]*(\n|$)/i, "")
-    .split(/\n{2,}/)
-    .some((block) => {
-      const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
-      const timingIndex = lines.findIndex((line) => line.includes("-->"));
-      return timingIndex !== -1 && isHumanCaptionText(lines.slice(timingIndex + 1).join(" "));
-    });
 }
 
 function targetKey(target) {
@@ -74,6 +35,10 @@ function isCandidateResponse(url, mimeType) {
 }
 
 function decodeBody(body, base64Encoded) {
+  const maximumEncodedLength = Math.ceil((MAX_CAPTION_BYTES * 4) / 3) + 4;
+  if (String(body || "").length > (base64Encoded ? maximumEncodedLength : MAX_CAPTION_BYTES)) {
+    return "";
+  }
   if (!base64Encoded) {
     return body || "";
   }
@@ -319,8 +284,33 @@ async function fetchText(url) {
   if (!response.ok) {
     return "";
   }
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_CAPTION_BYTES) {
+    return "";
+  }
 
-  return response.text();
+  if (!response.body) {
+    const text = await response.text();
+    return text.length <= MAX_CAPTION_BYTES ? text : "";
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let byteCount = 0;
+  let text = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    byteCount += value.byteLength;
+    if (byteCount > MAX_CAPTION_BYTES) {
+      await reader.cancel();
+      return "";
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
 }
 
 async function findCaptionText(urls) {
@@ -329,7 +319,7 @@ async function findCaptionText(urls) {
   const captionSegments = [];
   const completeCaptionFiles = [];
 
-  while (queue.length > 0 && seen.size < 250) {
+  while (queue.length > 0 && seen.size < MAX_CANDIDATE_URLS) {
     const url = queue.shift();
     if (!url || seen.has(url)) {
       continue;
