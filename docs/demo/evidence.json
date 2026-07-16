@@ -1,0 +1,25 @@
+{
+  "schema": "video-subtitle-scanner-demo/v1",
+  "command": "npm run demo:generate",
+  "source": {
+    "path": "docs/demo/captions.vtt",
+    "sha256": "f879a7e00a3498be113677addf11fbb861504c677b065257bb483f561f09cf85",
+    "bytes": 418,
+    "license": "MIT",
+    "synthetic": true
+  },
+  "parser": {
+    "path": "chrome-extension/caption-core.js",
+    "sha256": "08d3fa6ca31edb191a33bb900e271d6e8a183712bb0e2219c92c831ac0355cce"
+  },
+  "output": {
+    "path": "docs/demo/expected.srt",
+    "sha256": "bb69c5f19e640def0e5f78cc482228f57e396c6e4c65f34072feb238b14e4da7",
+    "bytes": 192,
+    "cues": 3
+  },
+  "limitations": [
+    "Fixture evidence does not prove compatibility with every video provider.",
+    "Fixture evidence contains no audio, DRM content, private media or network retrieval."
+  ]
+}

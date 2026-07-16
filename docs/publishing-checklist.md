@@ -3,7 +3,7 @@
 ## Chrome Web Store
 
 1. Run `npm run lint`.
-2. Run `npm run typecheck`, `npm test`, `npm run test:browser`, `npm run verify:extension`, `npm run build` and `npm run audit`.
+2. Run `npm run typecheck`, `npm test`, `npm run demo:verify`, `npm run test:browser`, `npm run verify:extension`, `npm run build` and `npm run audit`.
 3. Run `npm run pack:extension`, then `npm run verify:package` and `npm run budget`.
 4. Verify the `.sha256` and `.manifest.json` sidecars in `dist/`, then upload only the ZIP to the Chrome Web Store Developer Dashboard.
 5. Use the listing copy from `docs/chrome-web-store-listing.md`.
@@ -18,6 +18,8 @@ Automated Chromium and axe gates cover deterministic extension states. Before re
 The Node.js packager is cross-platform and fails if `chrome-extension/` contains a symlink, a missing allowlisted file or an unexpected file. Identical source must produce identical ZIP bytes. Generated artifacts are CI outputs and are not committed.
 
 The performance report is a reproducible-input regression gate. Record its runtime and artifact sizes, but do not compare timing across unlike hardware or describe it as end-user latency.
+
+Follow `docs/manual-install-and-demo.md` for the unpacked-extension walkthrough. The committed demo fixture is synthetic and project-owned; never present it as evidence from a real provider or user video.
 
 Useful official references:
 

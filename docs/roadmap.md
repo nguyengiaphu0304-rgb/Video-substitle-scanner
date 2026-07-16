@@ -18,5 +18,5 @@
 
 - [x] Performance budget on large valid fixtures
 - [ ] Manual privacy and permission review
-- [ ] Reproducible demo evidence and store/manual-install guide
+- [x] Reproducible demo evidence and store/manual-install guide
 - [ ] Verified tag and non-prerelease GitHub Release

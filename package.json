@@ -14,6 +14,8 @@
     "verify:extension": "node scripts/validate-extension.mjs",
     "verify:package": "node scripts/verify-extension-package.mjs",
     "budget": "node scripts/check-performance-budget.mjs",
+    "demo:generate": "node scripts/demo-evidence.mjs generate",
+    "demo:verify": "node scripts/demo-evidence.mjs verify",
     "audit": "npm audit --audit-level=high",
     "pack:extension": "node scripts/pack-extension.mjs"
   },
