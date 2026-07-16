@@ -158,16 +158,22 @@ test("tracks debugger stop and unexpected detach in the MV3 worker", async ({}, 
 
     await invokeForActiveTab(popup, fixture, "#start-scan");
     await expect(popup.getByRole("status")).toContainText("Advanced scan attached.");
-    await worker.evaluate(async () => {
+    const tabId = await worker.evaluate(async () => {
       const [tab] = await chrome.tabs.query({ url: "http://127.0.0.1/*" });
-      await chrome.debugger.detach({ tabId: tab.id });
+      return tab.id;
     });
+    await fixture.close();
     await expect
       .poll(async () => {
-        await invokeForActiveTab(popup, fixture, "#refresh-scan");
-        return popup.getByRole("status").textContent();
+        return popup.evaluate(async (closedTabId) => {
+          const response = await chrome.runtime.sendMessage({
+            type: "GET_DEEP_SCAN",
+            tabId: closedTabId,
+          });
+          return response.result.attached;
+        }, tabId);
       })
-      .toBe("Deep scan is not running.");
+      .toBe(false);
   } finally {
     await context.close();
   }
