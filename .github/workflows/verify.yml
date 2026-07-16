@@ -23,6 +23,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run demo:verify
+      - run: npm run privacy:verify
       - run: npm run verify:extension
       - run: npm run build
       - run: npm run audit
@@ -36,6 +37,7 @@ jobs:
             dist/*.zip
             dist/*.sha256
             dist/*.manifest.json
+            dist/privacy-report.json
             dist/performance-report.json
           if-no-files-found: error
 
