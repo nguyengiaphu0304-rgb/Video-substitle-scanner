@@ -2,7 +2,8 @@ import {
   captionTextToSrt,
   combineSrtTexts,
   isHumanCaptionText,
-  parseTimeToSeconds
+  parseTimeToSeconds,
+  uniqueOriginPatterns
 } from "./caption-core.js";
 
 const statusEl = document.getElementById("status");
@@ -40,23 +41,6 @@ function downloadText(filename, text) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
-}
-
-function originPattern(url) {
-  try {
-    const parsed = new URL(url);
-    if (!["http:", "https:"].includes(parsed.protocol)) {
-      return "";
-    }
-
-    return `${parsed.origin}/*`;
-  } catch {
-    return "";
-  }
-}
-
-function uniqueOriginPatterns(urls) {
-  return [...new Set(urls.map(originPattern).filter(Boolean))].slice(0, 20);
 }
 
 function permissionsApiAvailable() {

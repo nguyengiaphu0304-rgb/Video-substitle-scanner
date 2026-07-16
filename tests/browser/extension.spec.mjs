@@ -81,6 +81,11 @@ async function openPopup(context, extensionId, activePage) {
   return popup;
 }
 
+async function invokeForActiveTab(popup, activePage, selector) {
+  await activePage.bringToFront();
+  await popup.locator(selector).evaluate((element) => element.click());
+}
+
 async function expectAccessible(page) {
   const result = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -96,7 +101,7 @@ test("extracts one canonical Unicode cue from a real tab", async ({}, testInfo) 
     const popup = await openPopup(context, extensionId, fixture);
     await expectAccessible(popup);
 
-    await popup.getByRole("button", { name: "Extract From Active Tab" }).click();
+    await invokeForActiveTab(popup, fixture, "#extract");
     await expect(popup.getByRole("status")).toHaveText("Copied 1 loaded cues as SRT.");
     await expect(popup.locator("#output-count")).toHaveText("1 cue");
     await expect(popup.locator("#output")).toHaveValue(
@@ -114,7 +119,7 @@ test("reports restricted pages without exposing stale output", async ({}, testIn
     const restricted = context.pages()[0] ?? (await context.newPage());
     await restricted.goto("chrome://settings/");
     const popup = await openPopup(context, extensionId, restricted);
-    await popup.getByRole("button", { name: "Extract From Active Tab" }).click();
+    await invokeForActiveTab(popup, restricted, "#extract");
     await expect(popup.getByRole("status")).toContainText("Extraction failed:");
     await expect(popup.locator("#output-count")).toHaveText("Error");
     await expect(popup.locator("#output")).toHaveValue("");
@@ -131,18 +136,18 @@ test("tracks debugger stop and unexpected detach in the MV3 worker", async ({}, 
     await fixture.goto(`${fixtureOrigin}/fixture`);
     const popup = await openPopup(context, extensionId, fixture);
 
-    await popup.getByRole("button", { name: "Start Scan" }).click();
+    await invokeForActiveTab(popup, fixture, "#start-scan");
     await expect(popup.getByRole("status")).toContainText("Advanced scan attached.");
-    await popup.getByRole("button", { name: "Stop" }).click();
+    await invokeForActiveTab(popup, fixture, "#stop-scan");
     await expect(popup.getByRole("status")).toHaveText("Deep scan stopped.");
 
-    await popup.getByRole("button", { name: "Start Scan" }).click();
+    await invokeForActiveTab(popup, fixture, "#start-scan");
     await expect(popup.getByRole("status")).toContainText("Advanced scan attached.");
     await worker.evaluate(async () => {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const [tab] = await chrome.tabs.query({ url: "http://127.0.0.1/*" });
       await chrome.debugger.detach({ tabId: tab.id });
     });
-    await popup.getByRole("button", { name: "Refresh" }).click();
+    await invokeForActiveTab(popup, fixture, "#refresh-scan");
     await expect(popup.getByRole("status")).toHaveText("Deep scan is not running.");
   } finally {
     await context.close();

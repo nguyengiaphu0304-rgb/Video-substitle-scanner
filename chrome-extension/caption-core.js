@@ -1,6 +1,25 @@
 export const MAX_CAPTION_BYTES = 2 * 1024 * 1024;
 export const MAX_CANDIDATE_URLS = 250;
 
+export function originPattern(url) {
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return "";
+    }
+
+    // Chrome match patterns do not include ports. Requesting the literal
+    // URL origin would fall outside the optional host pattern in the manifest.
+    return `${parsed.protocol}//${parsed.hostname}/*`;
+  } catch {
+    return "";
+  }
+}
+
+export function uniqueOriginPatterns(urls) {
+  return [...new Set(urls.map(originPattern).filter(Boolean))].slice(0, 20);
+}
+
 const BAD_TEXT_HINT =
   /"metadataType"|discontinuity|"\s*PTS\s*"|^\s*\{[\s\S]*\}\s*$/iu;
 const UNICODE_LETTER_OR_NUMBER = /[\p{L}\p{N}]/gu;
