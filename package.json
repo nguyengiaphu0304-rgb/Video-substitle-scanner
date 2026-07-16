@@ -7,22 +7,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "pack:extension": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pack-extension.ps1"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0",
-    "lodash": "^4.18.1",
-    "next": "latest",
-    "prisma": "^5.0.0",
-    "react": "latest",
-    "react-dom": "latest"
+    "@prisma/client": "5.22.0",
+    "lodash": "4.18.1",
+    "next": "16.2.10",
+    "prisma": "5.22.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.24",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "eslint": "latest",
-    "eslint-config-next": "latest",
-    "typescript": "latest"
+    "@types/lodash": "4.17.24",
+    "@types/node": "25.3.5",
+    "@types/react": "19.2.14",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.2.10",
+    "typescript": "6.0.3",
+    "vitest": "4.1.0"
+  },
+  "overrides": {
+    "postcss": "8.5.10"
   }
 }

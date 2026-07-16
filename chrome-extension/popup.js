@@ -123,7 +123,7 @@ function frameProbe() {
       return false;
     }
 
-    const letters = cleaned.match(/[A-Za-z]/g) || [];
+    const letters = cleaned.match(/\p{L}/gu) || [];
     if (letters.length < 3) {
       return false;
     }
@@ -264,7 +264,7 @@ function isHumanCaptionText(text) {
     return false;
   }
 
-  const letters = cleaned.match(/[A-Za-z]/g) || [];
+  const letters = cleaned.match(/\p{L}/gu) || [];
   if (letters.length < 3) {
     return false;
   }
