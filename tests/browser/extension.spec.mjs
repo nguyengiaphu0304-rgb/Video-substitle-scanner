@@ -47,22 +47,37 @@ test.afterAll(async () => {
   await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
 });
 
-async function extensionPath(outputDir, grantOptionalPermissions) {
-  if (!grantOptionalPermissions) return productionExtension;
+async function extensionPath(outputDir, { grantOptionalPermissions, denyDebuggerPermission }) {
+  if (!grantOptionalPermissions && !denyDebuggerPermission) return productionExtension;
   const directory = await mkdtemp(path.join(tmpdir(), "subtitle-extension-browser-"));
   await cp(productionExtension, directory, { recursive: true });
-  const manifestPath = path.join(directory, "manifest.json");
-  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
-  manifest.name = `${manifest.name} Browser Fixture`;
-  manifest.permissions = [...manifest.permissions, "debugger"];
-  manifest.optional_permissions = manifest.optional_permissions.filter((permission) => permission !== "debugger");
-  manifest.host_permissions = ["http://127.0.0.1/*"];
-  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  if (grantOptionalPermissions) {
+    const manifestPath = path.join(directory, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.name = `${manifest.name} Browser Fixture`;
+    manifest.permissions = [...manifest.permissions, "debugger"];
+    manifest.optional_permissions = manifest.optional_permissions.filter((permission) => permission !== "debugger");
+    manifest.host_permissions = ["http://127.0.0.1/*"];
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  }
+  if (denyDebuggerPermission) {
+    const popupPath = path.join(directory, "popup.js");
+    const source = await readFile(popupPath, "utf8");
+    const request = 'return chrome.permissions.request({ permissions: ["debugger"] });';
+    if (!source.includes(request)) throw new Error("Debugger permission request seam changed");
+    await writeFile(popupPath, source.replace(request, "return false;"));
+  }
   return directory;
 }
 
-async function launchExtension(testInfo, { grantOptionalPermissions = true } = {}) {
-  const unpacked = await extensionPath(testInfo.outputDir, grantOptionalPermissions);
+async function launchExtension(
+  testInfo,
+  { grantOptionalPermissions = true, denyDebuggerPermission = false } = {},
+) {
+  const unpacked = await extensionPath(testInfo.outputDir, {
+    grantOptionalPermissions,
+    denyDebuggerPermission,
+  });
   const context = await chromium.launchPersistentContext(testInfo.outputPath("profile"), {
     channel: "chromium",
     headless: true,
@@ -143,10 +158,22 @@ test("tracks debugger stop and unexpected detach in the MV3 worker", async ({}, 
 
     await invokeForActiveTab(popup, fixture, "#start-scan");
     await expect(popup.getByRole("status")).toContainText("Advanced scan attached.");
-    await worker.evaluate(async () => {
+    const tabId = await worker.evaluate(async () => {
       const [tab] = await chrome.tabs.query({ url: "http://127.0.0.1/*" });
       await chrome.debugger.detach({ tabId: tab.id });
+      return tab.id;
     });
+    await expect
+      .poll(() =>
+        worker.evaluate(async (activeTabId) => {
+          const response = await chrome.runtime.sendMessage({
+            type: "GET_DEEP_SCAN",
+            tabId: activeTabId,
+          });
+          return response.result.attached;
+        }, tabId),
+      )
+      .toBe(false);
     await invokeForActiveTab(popup, fixture, "#refresh-scan");
     await expect(popup.getByRole("status")).toHaveText("Deep scan is not running.");
   } finally {
@@ -174,7 +201,10 @@ test("keeps popup controls keyboard reachable with an explicit live region", asy
 });
 
 test("shows a deterministic denial state for optional debugger access", async ({}, testInfo) => {
-  const { context, extensionId } = await launchExtension(testInfo, { grantOptionalPermissions: false });
+  const { context, extensionId } = await launchExtension(testInfo, {
+    grantOptionalPermissions: false,
+    denyDebuggerPermission: true,
+  });
   try {
     const fixture = context.pages()[0] ?? (await context.newPage());
     await fixture.goto(`${fixtureOrigin}/fixture`);
