@@ -75,6 +75,7 @@ npm run build
 npm run audit
 npm run pack:extension
 npm run verify:package
+npm run budget
 ```
 
 `npm run audit` is an enforced release gate. A release must not be tagged while high-severity advisories remain unresolved.
@@ -87,6 +88,8 @@ npm run pack:extension
 
 The deterministic Chrome Web Store upload ZIP, SHA-256 sidecar and package manifest are written to `dist/`. The dependency-free Node.js packager uses a strict allowlist and rejects symlinks or unexpected files. Identical source produces identical archive bytes; generated artifacts are not committed.
 
+`npm run budget` parses a deterministic 25,000-cue multilingual WebVTT fixture, verifies its exact output, and enforces 2,000 ms parsing, 64 KiB archive, and 48 KiB executable-JavaScript ceilings. It writes `dist/performance-report.json`. The timing ceiling is a CI regression gate, not a cross-device latency benchmark or a claim about arbitrary websites.
+
 Publishing materials are in `docs/`:
 
 - `docs/privacy-policy.md`
@@ -97,4 +100,4 @@ Publishing materials are in `docs/`:
 
 This tool can only extract captions that the browser can access from the page, text tracks, or network responses. If a site never exposes a full subtitle file or playlist and only loads chunks during playback, the extension can only collect chunks that have been requested by the page.
 
-The tool does not bypass DRM, transcribe audio or upload user media. TTML support covers timed paragraph elements and does not claim conformance with every TTML profile. Browser tests use only a synthetic local fixture. Automated Chromium and axe checks do not replace manual Chrome, zoom/reflow or screen-reader review. See [architecture](docs/architecture.md), [threat model](docs/threat-model.md), [ADR 001](docs/adr/001-shared-parser-and-optional-debugger.md), [ADR 002](docs/adr/002-deterministic-extension-packaging.md), [ADR 003](docs/adr/003-browser-extension-verification.md) and the [roadmap](docs/roadmap.md).
+The tool does not bypass DRM, transcribe audio or upload user media. TTML support covers timed paragraph elements and does not claim conformance with every TTML profile. Browser tests use only a synthetic local fixture. Automated Chromium and axe checks do not replace manual Chrome, zoom/reflow or screen-reader review. See [architecture](docs/architecture.md), [threat model](docs/threat-model.md), [ADR 001](docs/adr/001-shared-parser-and-optional-debugger.md), [ADR 002](docs/adr/002-deterministic-extension-packaging.md), [ADR 003](docs/adr/003-browser-extension-verification.md), [ADR 004](docs/adr/004-performance-budget.md) and the [roadmap](docs/roadmap.md).

@@ -27,6 +27,7 @@ jobs:
       - run: npm run audit
       - run: npm run pack:extension
       - run: npm run verify:package
+      - run: npm run budget
       - uses: actions/upload-artifact@v6
         with:
           name: video-subtitle-scanner-extension
@@ -34,6 +35,7 @@ jobs:
             dist/*.zip
             dist/*.sha256
             dist/*.manifest.json
+            dist/performance-report.json
           if-no-files-found: error
 
   browser:

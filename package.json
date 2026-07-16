@@ -13,6 +13,7 @@
     "test:browser": "playwright test",
     "verify:extension": "node scripts/validate-extension.mjs",
     "verify:package": "node scripts/verify-extension-package.mjs",
+    "budget": "node scripts/check-performance-budget.mjs",
     "audit": "npm audit --audit-level=high",
     "pack:extension": "node scripts/pack-extension.mjs"
   },
