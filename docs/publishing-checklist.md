@@ -4,7 +4,7 @@
 
 1. Run `npm run lint`.
 2. Run `npm run typecheck`, `npm test`, `npm run test:browser`, `npm run verify:extension`, `npm run build` and `npm run audit`.
-3. Run `npm run pack:extension`, then `npm run verify:package`.
+3. Run `npm run pack:extension`, then `npm run verify:package` and `npm run budget`.
 4. Verify the `.sha256` and `.manifest.json` sidecars in `dist/`, then upload only the ZIP to the Chrome Web Store Developer Dashboard.
 5. Use the listing copy from `docs/chrome-web-store-listing.md`.
 6. Provide a hosted privacy policy URL based on `docs/privacy-policy.md`.
@@ -16,6 +16,8 @@
 Automated Chromium and axe gates cover deterministic extension states. Before release, manually verify Chrome permission prompts, 200% zoom/reflow, keyboard operation and at least one screen reader; record only checks actually performed.
 
 The Node.js packager is cross-platform and fails if `chrome-extension/` contains a symlink, a missing allowlisted file or an unexpected file. Identical source must produce identical ZIP bytes. Generated artifacts are CI outputs and are not committed.
+
+The performance report is a reproducible-input regression gate. Record its runtime and artifact sizes, but do not compare timing across unlike hardware or describe it as end-user latency.
 
 Useful official references:
 
